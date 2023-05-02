@@ -1,4 +1,7 @@
 # LLM-DS
+
+Part of future model of the Dialogue Flow Framework from DeepPavlov.
+
 This is drafts of the model, that doublechecks the information with Wikipedia and cooperate with ChatGPT to provied best response
 
 Pipeline:
