@@ -82,7 +82,6 @@ def process_response(initial_response: str):
     search = extract_wikipedia_page(wikipedia_response)
     # now diving into google search
     wikipedia_extract = do_search(f"{search}")
-    a = 5
     # wikipedia_entities = ask_llm(instr_map_entities + wikipedia_extract)
     # wikipedia_entities_lst = process_entities(wikipedia_entities)
     # initial_set = set(initial_entities_lst)
@@ -94,10 +93,17 @@ def process_response(initial_response: str):
         instr_find_mistakes + initial_response + "\n" + instr_use_truth + wikipedia_extract + "\n" + instr_print_necessary)
     return corrected_response
 
+def check_every_sentence_has_something_new(response) -> str:
+    pass
+
+def style_of_response(response) -> str:
+    pass
+
 def process_with_provided_knowledge(initial_response: str, provided_knowledge) -> str:
     corrected_response = ask_llm(
         instr_find_mistakes + initial_response + "\n" + instr_use_truth + provided_knowledge + "\n" + instr_print_necessary)
     return corrected_response
+
 
 
 # text = process_response(
