@@ -20,6 +20,7 @@
 import re
 from ask_llm import ask_llm
 from do_search import do_search
+from styles import styleResponse, listResponse, addMoreContext, summarizeResponse, searchWikipediaForProof, shortenResponse
 
 entities_re = re.compile("entities")
 
@@ -64,35 +65,18 @@ def process_entities(text_with_entities: str):
     return list_of_entities
 
 
-def extract_wikipedia_page(wikipedia_response: str) -> str:
-    suggested_search = wikipedia_response.split("\"", 2)[1]
-    return suggested_search
 
 
-def extract_corrected_response(repsonse: str) -> str:
-    suggested_response = repsonse.split("\"", 2)[1]
-    return suggested_response
+def compare_entities(initial_response: str , internet_search_response: str):
+    text_with_entities = ask_llm(instr_map_entities + initial_response)
+    initial_entities_lst = process_entities(text_with_entities)  # these entities may be possibly all wrong
+    internet_search_entities = ask_llm(instr_map_entities + internet_search_response)
+    internet_search_entities_lst = process_entities(internet_search_entities)
+    initial_set = set(initial_entities_lst)
+    internet_set = set(internet_search_entities_lst)
+    difference = initial_set.difference(internet_set)
+    print(difference)
 
-
-def process_response(initial_response: str):
-    # text_with_entities = ask_llm(instr_map_entities + initial_response)
-    # initial_entities_lst = process_entities(text_with_entities)  # these entities may be possibly all wrong
-    # now diving into wikipedia...
-    wikipedia_response = ask_llm(instr_wikipedia_page + initial_response)
-    search = extract_wikipedia_page(wikipedia_response)
-    # now diving into google search
-    wikipedia_extract = do_search(f"{search}")
-    a = 5
-    # wikipedia_entities = ask_llm(instr_map_entities + wikipedia_extract)
-    # wikipedia_entities_lst = process_entities(wikipedia_entities)
-    # initial_set = set(initial_entities_lst)
-    # wikipedia_set = set(wikipedia_entities_lst)
-    # difference = initial_set.difference(wikipedia_set)
-    # print(difference)
-    # let's ask llm
-    corrected_response = ask_llm(
-        instr_find_mistakes + initial_response + "\n" + instr_use_truth + wikipedia_extract + "\n" + instr_print_necessary)
-    return corrected_response
 
 def process_with_provided_knowledge(initial_response: str, provided_knowledge) -> str:
     corrected_response = ask_llm(
@@ -100,9 +84,92 @@ def process_with_provided_knowledge(initial_response: str, provided_knowledge) -
     return corrected_response
 
 
-# text = process_response(
-#     "Titanic is a 1997 American film directed by James Cameron. IIt is based on accounts of the sinking of RMS Titanic and stars Natalie Portman and Hugh Laurie as members of different social classes")
-# print(text)
+def define_main_topic(suggested_response: str) -> str:
+    main_topic_instr = "Can you give main topic of this fragment? "
+    main_topic_answer = ask_llm(main_topic_instr + suggested_response)
+    sentences_of_answer = main_topic_answer.split('.')
+    if sentences_of_answer[0].startswith("The main topic of this fragment is"):
+        main_topic = sentences_of_answer[0][35:]
+    else:
+        for sent in sentences_of_answer:
+            if sent.lower().find("main topic is") >= 0:
+                idx = sent.find("main_topic is")
+                main_topic = sent[idx + len("main_topic is") + 1]
+                break
+        else:
+            raise ValueError("LLM did not provided main topic of response")
+    return main_topic
 
-text = process_with_provided_knowledge(response_to_fix, true_info)
-print(text)
+def ask_to_fix(matcher) -> str:
+    rating = matcher.group()
+    if 4 <= int(rating) <= 5:
+        return "ok"
+    else:
+        # let's ask how to fix that
+        fix_instr = "How would you fix this response? Print an example"
+        fixed_resp = ask_llm(fix_instr)
+        if len(fixed_resp) > 2000:
+            fixed_resp = shortenResponse(fixed_resp, 500)
+        return fixed_resp
+
+def ask_for_feedback_about_response(suggested_response: str, main_topic: str) -> str:
+    feedback_instr = f"Do you think this is a good response to a question about \"What is {main_topic}?\" to a person, who know nothing about it?  The response: "
+    rate_instr = "From 1 to 5 where 1 is not comprehensive response and 5 is a very good response how good is this response?"
+    llm_opinion = ask_llm(feedback_instr + suggested_response + rate_instr)
+    digits_in_text = re.findall("\d{1}", llm_opinion)
+    if len(digits_in_text) == 0:
+        raise Exception("Model cannot rate this response for some reason. Try again later")
+    else:
+        # let's think first digit appearing in response i
+        rating = int(digits_in_text[0])
+        if 4 <= int(rating) <= 5:
+            return "ok"
+        else:
+            # let's ask how to fix that
+            fix_instr = "How would you fix this response? Print an example"
+            fixed_resp = ask_llm(fix_instr)
+            if len(fixed_resp) > 2000:
+                fixed_resp = shortenResponse(fixed_resp, 500)
+            return fixed_resp
+
+
+
+
+# style = ["list", "long", "short", "search", "summarize"]
+def launcher(initial_response, style = None, params=None):
+    if style is None:
+        response = styleResponse(initial_response)
+    elif style == "list":
+        response = listResponse(initial_response, *params)
+    elif style == "short" or style == "summarize":
+        response = summarizeResponse(initial_response)
+    elif style == "long":
+        response = addMoreContext(initial_response, *params)
+    elif style == "search" :
+        response = searchWikipediaForProof(initial_response)
+    else:
+        raise Exception("Invalid style option")
+    suggested_response = response.process()
+    # let's get main idea
+    try:
+        main_idea = define_main_topic(suggested_response)
+    except Exception as exception:
+        print(exception)
+        return -1
+    opinion = ask_for_feedback_about_response(suggested_response, main_idea)
+    if opinion == "ok":
+        return suggested_response
+    else:
+        return opinion
+
+
+#text = process_with_provided_knowledge(response_to_fix, true_info)
+
+style = ["list", "long", "short", "search"]
+with open("initial_response", "r") as given_response:
+    lines = given_response.readlines()
+    response_to_process = ""
+    for line in lines:
+        response_to_process += line
+    text = launcher(response_to_process, "short")
+    print(text)
