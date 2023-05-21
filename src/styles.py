@@ -1,7 +1,7 @@
 import re
 
-from ask_llm import ask_llm
-from do_search import do_search
+from .ask_llm import ask_llm
+from .do_search import do_search
 
 
 # list of important information
@@ -90,6 +90,7 @@ class shortenResponse(styleResponse):
             processed_response = extract_actual_response(response_by_llm)
         return processed_response
 
+
 class searchWikipediaForProof(styleResponse):
     def __init__(self, response):
         super().__init__(response)
@@ -126,6 +127,7 @@ def remove_stop_words(response: str) -> str:
     response = re.sub("Here's\w*:\n", "", response)
     response = re.sub("Sure, here's\w*:\n", "", response)
     return response
+
 
 def extract_actual_response(response_to_process) -> str:
     response_by_llm = response_to_process.split(":\n\"")[1]

@@ -18,9 +18,9 @@
 # Here's a small database. If the following text is incorrect,
 # correct the mistakes in the text using this database and print the corrected fragment.
 import re
-from ask_llm import ask_llm
-from do_search import do_search
-from styles import styleResponse, listResponse, addMoreContext, summarizeResponse, searchWikipediaForProof, shortenResponse
+from .ask_llm import ask_llm
+from .do_search import do_search
+from .styles import styleResponse, listResponse, addMoreContext, summarizeResponse, searchWikipediaForProof, shortenResponse
 
 entities_re = re.compile("entities")
 
@@ -163,13 +163,24 @@ def launcher(initial_response, style = None, params=None):
         return opinion
 
 
-#text = process_with_provided_knowledge(response_to_fix, true_info)
+def provide_llm_with_action(question: str, answer: str):
+    actions_instr = f"Here's actions you can do: fix the factual errors, add more context to response, delete unnecessary information from response , make it more eloquent. User would like to get the best response on question: \"{question}\". The response is {answer}. Choose several actions you would do to enhance this particular response? List the necessary actions and corrected response"
+    llm_opinion = ask_llm(actions_instr)
+    listed_actions = re.findall("^- \w*$", llm_opinion)
+    idx_of_response = llm_opinion.lower().find('corrected response:')
+    corrected_response = llm_opinion[idx_of_response + len('corrected response:'):]
+    return corrected_response
 
-style = ["list", "long", "short", "search"]
-with open("initial_response", "r") as given_response:
-    lines = given_response.readlines()
-    response_to_process = ""
-    for line in lines:
-        response_to_process += line
-    text = launcher(response_to_process, "short")
-    print(text)
+
+
+# style = ["list", "long", "short", "search"]
+# with open("initial_response", "r") as given_response:
+#     lines = given_response.readlines()
+#     response_to_process = ""
+#     for line in lines:
+#         response_to_process += line
+#     # text = launcher(response_to_process, "short")
+#     text = provide_llm_with_action("What is so special about Friends TV show?", response_to_process)
+#     print(text)
+
+

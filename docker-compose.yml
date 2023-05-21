@@ -1,0 +1,6 @@
+version: "3.9"
+services:
+    response_refinement:
+        build: .
+        ports:
+          - 8030:8030
