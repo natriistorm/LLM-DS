@@ -1,7 +1,7 @@
 version: "3.9"
 services:
     response_refinement:
-        image: natriistorm/refiner
+        image: natriistorm/response_refiner
         build: .
         ports:
           - "8030:8030"

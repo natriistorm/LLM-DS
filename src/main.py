@@ -171,10 +171,10 @@ def provide_llm_with_action(question: str, answer: str):
         corrected_response = llm_opinion[idx_of_response + len('corrected response:'):]
     else:
         corrected_response = answer
-    return corrected_response.replace("\n", "")
+    return llm_opinion.replace('\"', "")
 
 
-# print(provide_llm_with_action("How Donald Trumo has become a president at 2016?", "campaign"))
+print(provide_llm_with_action("What is scrum of scrums", "spectacle"))
 
 # style = ["list", "long", "short", "search"]
 # with open("initial_response", "r") as given_response:
