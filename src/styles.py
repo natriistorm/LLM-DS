@@ -1,7 +1,7 @@
 import re
 
-from .ask_llm import ask_llm
-from .do_search import do_search
+from src.ask_llm import ask_llm
+from src.do_search import do_search
 
 
 # list of important information
