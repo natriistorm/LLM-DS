@@ -9,6 +9,6 @@ RUN pip install -r /src/requirements.txt
 
 COPY . /src
 
-CMD gunicorn --workers=1 server:app -b 0.0.0.0:8030 --timeout=1200
+CMD ["uvicorn", "src.server:app", "--host", "0.0.0.0", "--port", "8030"]
 
 EXPOSE 8030

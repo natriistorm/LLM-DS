@@ -1,7 +1,9 @@
-import openai
-from openai_api_token import OPENAI_API_KEY
+import os
 
-openai.api_key = OPENAI_API_KEY
+import openai
+# from openai_api_token import OPENAI_API_KEY
+
+openai.api_key = os.environ['OPENAI_API_KEY']
 
 
 def ask_llm(query: str) -> str:
