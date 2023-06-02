@@ -18,9 +18,10 @@
 # Here's a small database. If the following text is incorrect,
 # correct the mistakes in the text using this database and print the corrected fragment.
 import re
-from ask_llm import ask_llm
-from do_search import do_search
-from styles import styleResponse, listResponse, addMoreContext, summarizeResponse, searchWikipediaForProof, shortenResponse
+from src.ask_llm import ask_llm
+from src.do_search import do_search
+from src.styles import styleResponse, listResponse, addMoreContext, summarizeResponse, searchWikipediaForProof, \
+    shortenResponse
 
 entities_re = re.compile("entities")
 
@@ -65,9 +66,7 @@ def process_entities(text_with_entities: str):
     return list_of_entities
 
 
-
-
-def compare_entities(initial_response: str , internet_search_response: str):
+def compare_entities(initial_response: str, internet_search_response: str):
     text_with_entities = ask_llm(instr_map_entities + initial_response)
     initial_entities_lst = process_entities(text_with_entities)  # these entities may be possibly all wrong
     internet_search_entities = ask_llm(instr_map_entities + internet_search_response)
@@ -100,6 +99,7 @@ def define_main_topic(suggested_response: str) -> str:
             raise ValueError("LLM did not provided main topic of response")
     return main_topic
 
+
 def ask_to_fix(matcher) -> str:
     rating = matcher.group()
     if 4 <= int(rating) <= 5:
@@ -111,6 +111,7 @@ def ask_to_fix(matcher) -> str:
         if len(fixed_resp) > 2000:
             fixed_resp = shortenResponse(fixed_resp, 500)
         return fixed_resp
+
 
 def ask_for_feedback_about_response(suggested_response: str, main_topic: str) -> str:
     feedback_instr = f"Do you think this is a good response to a question about \"What is {main_topic}?\" to a person, who know nothing about it?  The response: "
@@ -133,10 +134,8 @@ def ask_for_feedback_about_response(suggested_response: str, main_topic: str) ->
             return fixed_resp
 
 
-
-
 # style = ["list", "long", "short", "search", "summarize"]
-def launcher(initial_response, style = None, params=None):
+def launcher(initial_response, style=None, params=None):
     if style is None:
         response = styleResponse(initial_response)
     elif style == "list":
@@ -145,7 +144,7 @@ def launcher(initial_response, style = None, params=None):
         response = summarizeResponse(initial_response)
     elif style == "long":
         response = addMoreContext(initial_response, *params)
-    elif style == "search" :
+    elif style == "search":
         response = searchWikipediaForProof(initial_response)
     else:
         raise Exception("Invalid style option")
@@ -163,13 +162,26 @@ def launcher(initial_response, style = None, params=None):
         return opinion
 
 
-#text = process_with_provided_knowledge(response_to_fix, true_info)
+def provide_llm_with_action(question: str, answer: str):
+    actions_instr = f"Here's actions you can do: fix the factual errors, add more context to response, delete unnecessary information from response, make it more eloquent. User would like to get the best response on question: \"{question}\". The response is {answer}. Choose several actions you would do to enhance this particular response? List the necessary actions and print final corrected response. If you fix an error, don't mention incorrect information. Make as short response as possible. If everything is alright with initial response, don't do anything."
+    llm_opinion = ask_llm(actions_instr)
+    listed_actions = re.findall("^- \w*$", llm_opinion)
+    idx_of_response = llm_opinion.lower().find('corrected response:')
+    if idx_of_response >= 0:
+        corrected_response = llm_opinion[idx_of_response + len('corrected response:'):]
+    else:
+        corrected_response = answer
+    return llm_opinion.replace('\"', "")
 
-style = ["list", "long", "short", "search"]
-with open("initial_response", "r") as given_response:
-    lines = given_response.readlines()
-    response_to_process = ""
-    for line in lines:
-        response_to_process += line
-    text = launcher(response_to_process, "short")
-    print(text)
+
+print(provide_llm_with_action("What is scrum of scrums", "spectacle"))
+
+# style = ["list", "long", "short", "search"]
+# with open("initial_response", "r") as given_response:
+#     lines = given_response.readlines()
+#     response_to_process = ""
+#     for line in lines:
+#         response_to_process += line
+#     # text = launcher(response_to_process, "short")
+#     text = provide_llm_with_action("What is so special about Friends TV show?", response_to_process)
+#     print(text)
