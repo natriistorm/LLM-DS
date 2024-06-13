@@ -1,16 +1,3 @@
-# экшены на поиск инфомрации и добавление по контексту
-# сделать фидбк модель которая будет способна на датасетах
-#
-# по запросу детектить фактическую ошибки
-# делать запрос в базы
-# и фиксят
-#
-# берешь пару диалогов проверяю сетап
-# есть фактическая ошибка
-# какой промпт нужно подать LLM чтобы он пофиксил ее
-# с помощью первой статьи в википедии
-
-
 # 'Is there any factual mistakes in this fragment of text? If no, please check Wikipedia article about it.'
 
 # Correct the mistakes in this fragment and print the corrected fragment.
@@ -175,13 +162,3 @@ def provide_llm_with_action(question: str, answer: str):
 
 
 print(provide_llm_with_action("What is scrum of scrums", "spectacle"))
-
-# style = ["list", "long", "short", "search"]
-# with open("initial_response", "r") as given_response:
-#     lines = given_response.readlines()
-#     response_to_process = ""
-#     for line in lines:
-#         response_to_process += line
-#     # text = launcher(response_to_process, "short")
-#     text = provide_llm_with_action("What is so special about Friends TV show?", response_to_process)
-#     print(text)
