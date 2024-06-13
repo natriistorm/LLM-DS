@@ -2,7 +2,7 @@
 
 Part of future model of the Dialogue Flow Framework from DeepPavlov.
 
-This is drafts of the model, that doublechecks the information with Wikipedia and cooperate with ChatGPT to provied best response
+This is drafts of the model, that doublechecks the information with Wikipedia and cooperate with ChatGPT to provied best response in set style (factual, essay, plain text)
 
 Pipeline:
 
